@@ -38,24 +38,35 @@ class my_isodata():
             center[i,:]=np.meaen(self.__data[w,:],axis=0)
         #步驟5:如果當前中心數量少於k0/2則分裂
         if center.shape[0]<self.__k0/2:
-
+            std = np.array([])
+            for i in center[0].shape:
+                mask = report[:,-1]==i
+                choose_point = report[mask,0:2]
+                std = np.insert(std,np.std(choose_point,axis=0),axis=0)
+            max_std = np.max(std,axis=1)
+            max_stddim = np.argmax(std,axis=1)
+            where_max = np.where(max_std>self.__sigma)
         #步驟6:如果當前中心數量大於2*k0則合併
-        if center.shape[0]>self.__k0*2:
+        elif center.shape[0]>self.__k0*2:
             while True:
                 D = np.triu(squareform(pdist(center)))
                 if len(np.where((D==D)&(D!=0)&(D<self.__dmin)))>0:
                     r = np.where((D == D) & (D != 0) & (D <= self.__dmin))
                     first_nodmin = list(map(list, zip(r[0], r[1])))[0]
                     mask = report[:,-1]==first_nonmin[0] | report[:,-1]==first_nodmin[1]
-                    tem_var = report[mask,0:3]
+                    tem_var = report[mask,:]
                     report = np.delete(report,mask,axis=0)
+                    choose_center = center[first_nodmin,:]
                     center=np.delete(center,first_nodmin,axis=0)
                     six_ac = self.assign(report[:,0:2],center)
                     report = np.insert(report[:,0:2],center.shape[1],values=six_ac,axis=1)
-                    counts = np.unique(tem_var[:,-1], return_counts=True)[1]  # 找個中心元素數量
-                    new_center = np.average(tem_var[],weights=)
-
-
+                    new_center = np.average(choose_center,weights=[[tem_var[tem_var[:,-1]==first_nodmin[0]]],[tem_var[tem_var[:,-1]==first_nodmin[1]]]])
+                    center = np.insert(center,new_center,axis=0)
+                    tem_var2 = tem_var[:,0:2]
+                    tem_var2 = np.insert(tem_var2,tem_var2.shape[1],values=center.shape[0],axis=1)
+                    report = np.vstack((report,tem_var2))
+                else:
+                    break
         #步驟7:如果達到最大迭代次數則終止，沒有則回到步驟2
 
 
